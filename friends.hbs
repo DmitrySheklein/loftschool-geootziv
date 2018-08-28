@@ -2,11 +2,73 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css" />
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
+        crossorigin="anonymous">
+    <link rel="shortcut icon" href="./src/images/favicon.ico" type="image/x-icon">
     <title>{{htmlWebpackPlugin.options.title}}</title>
 </head>
 <body>
-<div id="homework-container">
-    {{> "./friends-content.hbs"}}
+<div id="map"></div>
+<div class="modal">
+    <div class="modal__header">
+        <div class="modal__title">Невский пр., 78, Санкт-Петербург, 191025</div>
+        <button class="modal__close" type="button">Закрыть</button>
+    </div>
+    <div class="modal__body">
+        <ul class="modal__comments-list">
+            <li class="modal__comment">
+                <div class="modal__comment-info">
+                    <div class="modal__comment-author">svetlana</div>
+                    <div class="modal__comment-address">Шоколадница</div>
+                    <div class="modal__comment-data">13.12.2015</div>
+                </div>
+                <div class="modal__comment-text">
+                     Очень хорошее место!
+                </div>
+            </li>
+            <li class="modal__comment">
+                <div class="modal__comment-info">
+                    <div class="modal__comment-author">Сергей Мелюков</div>
+                    <div class="modal__comment-address">Красный куб</div>
+                    <div class="modal__comment-data">12.12.2015</div>
+                </div>
+                <div class="modal__comment-text">
+                     Ужасное место! Кругом зомби!!!!
+                </div>
+            </li>
+            <li class="modal__comment">
+                <div class="modal__comment-info">
+                    <div class="modal__comment-author">Сергей Мелюков</div>
+                    <div class="modal__comment-address">Красный куб</div>
+                    <div class="modal__comment-data">12.12.2015</div>
+                </div>
+                <div class="modal__comment-text">
+                     Ужасное место! Кругом зомби!!!!
+                </div>
+            </li>
+{{!--             <li class="modal__comment">
+                <div class="modal__comment-info">
+                    <div class="modal__comment-author"></div>
+                    <div class="modal__comment-address"></div>
+                    <div class="modal__comment-data"></div>
+                </div>
+                <div class="modal__comment-text">
+
+                </div>
+            </li> --}}
+        </ul>
+        <div class="modal-review">
+            <div class="modal-review__title">ВАШ ОТЗЫВ</div>
+            <form action="#">
+                <input type="text" class="modal-review__input" placeholder="Ваше имя" required>
+                <input type="text" class="modal-review__input" placeholder="Укажите место">
+                <textarea name="comment" id="" cols="30" rows="10" class="modal-review__input modal-review__input--textarea" placeholder="Поделитесь впечатлениями"></textarea>
+                <button class="btn btn--save" type="submit">Добавить</button>
+            </form>
+        </div>
+    </div>
 </div>
 </body>
 </html>

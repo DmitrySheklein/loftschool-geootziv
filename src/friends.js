@@ -1,8 +1,13 @@
-import { consoleLogHelper, consoleLogHelper2 } from './utils';
 import './styles/styles.scss';
 
-console.log('My project!');
+const init = () => {
+    const map = new ymaps.Map('map', {
+        center: [55.751291, 37.628372],
+        zoom: 12,
+        behaviors: ['default', 'scrollZoom']
+    }, {
+        searchControlProvider: 'yandex#search'
+    });
 
-consoleLogHelper();
-
-consoleLogHelper2();
+}
+ymaps.ready(init)
