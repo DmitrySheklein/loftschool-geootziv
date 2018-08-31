@@ -35,7 +35,13 @@ body::before {
   width: 100%;
   height: 100%;
 }
-
+.map-pin {
+  font-size: 50px;
+  text-transform: uppercase;
+  background-image: linear-gradient(to top, #6e6e6e 0%, #a2a1a0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 .btn {
   display: block;
   padding: 9px 12px;
@@ -62,6 +68,7 @@ body::before {
 .modal {
   display: none;
   position: absolute;
+  z-index: 1;
   top: 5%;
   left: 5%;
   width: 380px;
