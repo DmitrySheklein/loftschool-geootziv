@@ -56,7 +56,11 @@ body::before {
     margin-left: auto;
   }
 }
+.modal.active {
+  display: block;
+}
 .modal {
+  display: none;
   position: absolute;
   top: 5%;
   left: 5%;

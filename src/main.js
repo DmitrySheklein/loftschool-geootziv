@@ -1,5 +1,5 @@
 import './styles/styles.scss';
-import renderModal from './../modal.hbs';
+import renderReview from './../modal-review.hbs';
 
 let comments = [
     {
@@ -27,8 +27,8 @@ let comments = [
     }
 ]
 
-let modalHtml = renderModal({ address: 'Улица пушкина дом колотушкина', comments })
-let modal = document.getElementById('modal');
+let modalHtml = renderReview({ comments })
+let modal = document.querySelector('.modal__comments-list');
 
 modal.innerHTML = modalHtml;
 
@@ -49,19 +49,18 @@ const init = () => {
         coordToAdress.then(res=> {
             let obj = res.geoObjects.get(0);
             let lastAddress = obj.properties.get('name');
-
+            
             console.log(lastAddress);
-
-            // Создание независимого экземпляра балуна и отображение его в центре карты.
-            let balloon = new ymaps.Balloon(map);
             
-            // Здесь родительскими устанавливаются опции карты,
-            // где содержатся значения по умолчанию для обязательных опций.
-            balloon.options.setParent(map.options);
-            // Открываем балун в центре карты:
-            balloon.open(coords);
+            const placemark = new ymaps.Placemark(coords)
+            console.log(placemark);
             
+            map.geoObjects.add(placemark);
         })
+    })
+
+    map.geoObjects.events.add('click', e => {
+        console.log('marked click');        
     })
 }
 
