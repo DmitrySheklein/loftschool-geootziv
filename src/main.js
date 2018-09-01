@@ -15,6 +15,27 @@ const init = () => {
         searchControlProvider: 'yandex#search'
     });
 
+    const clusterer = new ymaps.Clusterer({
+        /**
+         * Через кластеризатор можно указать только стили кластеров,
+         * стили для меток нужно назначать каждой метке отдельно.
+         * @see https://api.yandex.ru/maps/doc/jsapi/2.1/ref/reference/option.presetStorage.xml
+         */
+        preset: 'islands#invertedVioletClusterIcons',
+        /**
+         * Ставим true, если хотим кластеризовать только точки с одинаковыми координатами.
+         */
+        groupByCoordinates: false,
+        /**
+         * Опции кластеров указываем в кластеризаторе с префиксом "cluster".
+         * @see https://api.yandex.ru/maps/doc/jsapi/2.1/ref/reference/ClusterPlacemark.xml
+         */
+        clusterDisableClickZoom: true,
+        clusterHideIconOnBalloonOpen: false,
+        geoObjectHideIconOnBalloonOpen: false
+    })
+    let geoObjects = [];
+
     map.events.add('click', e => {
         let coords = e.get('coords');
         let position = e.get('position');
@@ -46,6 +67,7 @@ const init = () => {
             placemark.properties.set('address', lastAddress);
             
             map.geoObjects.add(placemark);
+            // geoObjects.push(placemark)
 
             addToComments(id, lastAddress)
             showModal(id, position, lastAddress)
@@ -64,6 +86,8 @@ const init = () => {
         }            
     })
     
+/*     clusterer.add(geoObjects);
+    map.geoObjects.add(clusterer);    */ 
 }
 
 ymaps.ready(init)
