@@ -16,18 +16,17 @@
     <div id="modal" class="modal">
         <div class="modal__header">
             <div class="modal__title"></div>
-            <button class="modal__close" type="button">Закрыть</button>
+            <button class="modal__close" type="button" title="Закрыть">Закрыть</button>
         </div>
         <div class="modal__body">
             <ul class="modal__comments-list">
-                Отзывов ещё нет.
                 {{> './modal-review.hbs'}}
             </ul>
             <div class="modal-review">
                 <div class="modal-review__title">ВАШ ОТЗЫВ</div>
                 <form action="#" id="add-review">
                     <input name="name" type="text" class="modal-review__input" placeholder="Ваше имя" required>
-                    <input name="address" type="text" class="modal-review__input" placeholder="Укажите место">
+                    <input name="address" type="text" class="modal-review__input" placeholder="Укажите место" required>
                     <textarea name="text" id="" cols="30" rows="10" class="modal-review__input modal-review__input--textarea" placeholder="Поделитесь впечатлениями"></textarea>
                     <button class="btn btn--save" type="submit">Добавить</button>
                 </form>

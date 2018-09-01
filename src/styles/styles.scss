@@ -1,7 +1,9 @@
 $bgColor: #fff;
 $orange: #ff8663;
+$gradient: linear-gradient(to top, #ff7249 0%, #ff9e63 100%);
+$gradientDark: linear-gradient(to top, #ff7249 0%, #ea8d54 100%);
 $font: "Fira Sans";
-$transition: background .3s ease;
+$transition: all .3s ease;
 @import url('https://fonts.googleapis.com/css?family=Fira+Sans:300,400,500,700&subset=cyrillic');
 html,
 body {
@@ -10,6 +12,9 @@ body {
 
 body {
   font-family: $font;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
 body::before {
@@ -41,13 +46,16 @@ body::before {
   background-image: linear-gradient(to top, #6e6e6e 0%, #a2a1a0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  &.active {
+    background-image: $gradient
+  }
 }
 .btn {
   display: block;
   padding: 9px 12px;
   border-radius: 10px;
-  border: none;
-  background: $orange;
+  border: 2px solid transparent;
+  background: $gradient;
   color: #ffffff;
   font-size: 12px;
   line-height: 1;
@@ -55,18 +63,27 @@ body::before {
   cursor: pointer;
   outline: none;
   transition: $transition;
+
   &:hover {
-    background: darken($color: $orange, $amount: 10);
+    background: #fff;
+    border-color: $orange;
+    color: $orange;
+  }
+  &:focus {
+    background: $gradientDark;
+    color: #fff
   }
   &--save {
     margin-left: auto;
   }
 }
 .modal.active {
-  display: block;
+  visibility: visible;
+  opacity: 1;
 }
 .modal {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
   position: absolute;
   z-index: 1;
   top: 5%;
@@ -75,11 +92,12 @@ body::before {
   background: #fff;
   border-radius: 10px;
   overflow: hidden;
+  transition: opacity .3s ease;
 }
 .modal__header {
   display: flex;
   align-items: center;
-  background: $orange;
+  background: $gradient;
   color: #fff;
   padding: 15px;
 }
@@ -106,6 +124,11 @@ body::before {
   background: url('../images/close__btn.png') no-repeat center;
   border: none;
   cursor: pointer;
+  transition: transform .3s ease;
+
+  &:hover {
+    transform: scale(1.05)
+  }
 }
 .modal__body {
   padding: 15px;
@@ -187,15 +210,42 @@ body::before {
     border: 1px solid #c4c4c4;
     background-color: #ffffff;
     outline: none;
-    transition: $transition;
+    transition: border .3s ease;
 
     &:focus {
-      border-color: #000;
+      border-color: $orange;
     }
-    
+    &.required {
+      animation: shake 1s ease;
+      border-color: $orange;
+    }
     &--textarea {
       resize: none;
       height: 130px;
     }
   }
+}
+
+@keyframes shake {
+  from,
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translate3d(-5px, 0, 0);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translate3d(5px, 0, 0);
+  }
+}
+
+.shake {
+  animation-name: shake;
 }

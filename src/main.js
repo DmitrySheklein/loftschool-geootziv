@@ -1,42 +1,7 @@
 import './styles/styles.scss';
 import renderReview from './../modal-review.hbs';
 
-let comments = [
-/*     {
-        id: '45.55, 33.33',
-        list: [
-            {
-                name: 'svetlana',
-                address: 'Шоколадница',
-                date: '13.12.2015',
-                text: 'Очень хорошее место!'
-            },
-            {
-                name: 'Сергей Мелюков',
-                address: 'Красный куб',
-                date: '12.12.2015',
-                text: ' Ужасное место! Кругом зомби!!!!'
-            },
-            {
-                name: 'Сергей',
-                address: 'Красный куб',
-                date: '12.12.2012',
-                text: 'Кругом зомби!!!!'
-            }            
-        ] 
-    } */
-/* 
-    {
-        id: 1234,
-        list: [    {
-            name: 'svetlana',
-            address: 'Шоколадница',
-            date: '13.12.2015',
-            text: 'Очень хорошее место!'
-            }   ]
-    } */
- 
-]
+let comments = [];
 let modal = document.getElementById('modal');
 let modalCloseBtn = document.querySelector('.modal__close')
 let modalSaveReview = modal.querySelector('.btn.btn--save')
@@ -62,7 +27,7 @@ const init = () => {
            
             // Создаём макет содержимого.
             let MyIconContentLayout = ymaps.templateLayoutFactory.createClass(
-                '<i class="map-pin fa fa-map-marker" aria-hidden="true"></i>'
+                '<i class="map-pin active fa fa-map-marker" aria-hidden="true"></i>'
             )            
             const placemark = new ymaps.Placemark(coords, {}, {
                 // Необходимо указать данный тип макета.
@@ -75,23 +40,35 @@ const init = () => {
                 iconLayout: 'default#imageWithContent',
                 iconContentLayout: MyIconContentLayout
             })
+
+            placemark.properties.set('test-id', id);
+            placemark.properties.set('type', 'geoMarker');
+            placemark.properties.set('address', lastAddress);
             
             map.geoObjects.add(placemark);
 
             addToComments(id, lastAddress)
-            showModal(position, lastAddress, generateComments(id), id)
-
+            showModal(id, position, lastAddress)
         })
     })
 
     map.geoObjects.events.add('click', e => {
-        console.log('marked click');               
+        let marker = e.get('target');
+        let type = marker.properties.get('type');
+        let id = marker.properties.get('test-id');
+        let position = e.get('position');
+        let lastAddress = marker.properties.get('address');
+ 
+        if (type === 'geoMarker') {
+            showModal( id, position, lastAddress)
+        }            
     })
+    
 }
 
 ymaps.ready(init)
 
-function showModal(position, titleName, comments, id) {
+function showModal( id, position, titleName) {
     modal.classList.add('active')
     let form = modal.querySelector('#add-review');
 
@@ -102,7 +79,7 @@ function showModal(position, titleName, comments, id) {
 
     let commentList = modal.querySelector('.modal__comments-list');
 
-    commentList.innerHTML = comments;
+    commentList.innerHTML = generateComments(id);
 
     let positionLeft = position[0];
     let positionTop = position[1];
@@ -110,15 +87,16 @@ function showModal(position, titleName, comments, id) {
     let windowHeight = window.innerHeight;
     let modalWidth = modal.offsetWidth;
     let modalHeight = modal.offsetHeight;
+    let pinSize = {
+        width: 29,
+        height: 50
+    }    
 
-/*     console.log(windowWidth, windowHeight);
-    console.log(modalWidth, modalHeight); */
-    
-    modal.style.left = `${positionLeft}px`
-    modal.style.top = `${positionTop}px`
+    modal.style.left = `${positionLeft + pinSize.width / 2}px`
+    modal.style.top = `${positionTop + pinSize.height / 2}px`
 
     if (positionLeft + modalWidth > windowWidth) {
-        modal.style.left = `${positionLeft-modalWidth}px`;        
+        modal.style.left = `${positionLeft - modalWidth}px`;        
     }
 
     if (positionTop + modalHeight > windowHeight) {
@@ -132,7 +110,14 @@ function hideModal() {
 
     commentList.innerHTML = '';
     title.innerHTML = '';    
-    modal.classList.remove('active')
+    modal.classList.remove('active');
+
+    let inputs = modal.querySelectorAll('.modal-review__input');
+
+    for (let input of inputs) {
+        input.classList.remove('required')
+        input.value = '';
+    }    
 }
 
 modalCloseBtn.addEventListener('click', hideModal)
@@ -142,10 +127,7 @@ function addToComments(id, address) {
         id,
         address,
         list: []
-    })
-
-    console.log(comments);
-    
+    })    
 }
 
 function generateComments(id) {  
@@ -170,21 +152,34 @@ modalSaveReview.addEventListener('click', e => {
     let name = form.name.value;
     let address = form.address.value;
     let text = form.text.value;
-    let date = `12.12.12`;
+    let dateNow = new Date();
+    let date = `${dateNow.getDate()}.${dateNow.getUTCMonth()}.${dateNow.getFullYear()}`;
+    let error = false;
 
-    console.log(typeof id,name,address,text);
+    let inputs = form.querySelectorAll('.modal-review__input');
+
+    for (let input of inputs) {
+        if (input.value === '' && input.required) {
+            input.classList.add('required')
+            error = true
+        } else {
+            input.classList.remove('required')
+        }
+    }
     
-    let comment = comments.find(item => {
-        return item.id === Number(id);
-    })
-
-    comment.list.push({
-        name, address, date, text
-    })
-
-    console.log(comment);    
-
-    let commentList = modal.querySelector('.modal__comments-list');
-
-    commentList.innerHTML =  generateComments(id);
+    if (!error) {
+        let comment = comments.find(item => {
+            return item.id === Number(id);
+        })
+    
+        comment.list.push({
+            name, address, date, text
+        })
+    
+        let commentList = modal.querySelector('.modal__comments-list');
+    
+        commentList.innerHTML = generateComments(id);
+    
+        form.reset()
+    }
 })
