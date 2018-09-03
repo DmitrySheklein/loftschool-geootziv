@@ -7,6 +7,7 @@ let modalCloseBtn = document.querySelector('.modal__close')
 let modalSaveReview = modal.querySelector('.btn.btn--save')
 let lastAddress;
 let lastCoords;
+let position;
 
 const init = () => {
     const map = new ymaps.Map('map', {
@@ -18,10 +19,35 @@ const init = () => {
     });
 
     let customItemContentLayout = ymaps.templateLayoutFactory.createClass(
-        // Флаг "raw" означает, что данные вставляют "как есть" без экранирования html.
         '<h2 class=ballon_header>{{ properties.balloonContentHeader|raw }}</h2>' +
             '<div class=ballon_body>{{ properties.balloonContentBody|raw }}</div>' +
-            '<div class=ballon_footer>{{ properties.balloonContentFooter|raw }}</div>'
+            '<div class=ballon_footer>{{ properties.balloonContentFooter|raw }}</div>',
+        {
+            build: function() {
+                customItemContentLayout.superclass.build.call(this);
+
+                let parent = this.getParentElement();
+                let link = parent.querySelector('.baloon-link');
+
+                link.addEventListener('click', this.onLinkClick.bind(link))
+            },
+            clear: function () {
+                let parent = this.getParentElement();
+                let link = parent.querySelector('.baloon-link');
+
+                link.removeEventListener('click', this.onLinkClick.bind(link))
+                customItemContentLayout.superclass.clear.call(this);
+            },
+
+            onLinkClick: function () {
+                let id = this.dataset.id;
+                let title = this.dataset.title;
+
+                clusterer.balloon.close()
+                showModal(id, position, title);
+
+            }			
+        }            
     );    
     const clusterer = new ymaps.Clusterer({
         preset: 'islands#invertedOrangeClusterIcons',
@@ -40,7 +66,7 @@ const init = () => {
 
     map.events.add('click', e => {
         lastCoords = e.get('coords');
-        let position = e.get('position');
+        position = e.get('position');
         let coordToAdress = ymaps.geocode(lastCoords);
         let id = Date.now();
 
@@ -58,25 +84,16 @@ const init = () => {
         let marker = e.get('target');
         let type = marker.properties.get('type');
         let id = marker.properties.get('test-id');
-        let position = e.get('position');
         let lastAddress = marker.properties.get('address');
+
+        position = e.get('position');
 
         if (type === 'geoMarker') {
             e.preventDefault();
             showModal(id, position, lastAddress)
         }        
     })
-    map.events.add('click', function (e) {
-        console.log('click map');
-        
-        var eMap = e.get('target');// Получение ссылки на объект, сгенерировавший событие (карта).
 
-        console.log(
-            eMap.get('domEvent').get('position')
-
-        );
-        
-    });
     modalSaveReview.addEventListener('click', e => {
         e.preventDefault()
         let btn = e.target;
@@ -86,7 +103,8 @@ const init = () => {
         let address = form.address.value;
         let text = form.text.value;
         let dateNow = new Date();
-        let date = `${dateNow.getDate()}.${dateNow.getUTCMonth()}.${dateNow.getFullYear()}`;
+        let date = `${dateNow.getDate()}.${dateNow.getUTCMonth() + 1}.${dateNow.getFullYear()}`;
+        let dateFull = `${dateNow.getDate()}.${dateNow.getUTCMonth() + 1}.${dateNow.getFullYear()} ${dateNow.getHours()}:${dateNow.getMinutes()}:${dateNow.getSeconds()}`
         let error = false;
     
         let inputs = form.querySelectorAll('.modal-review__input');
@@ -105,7 +123,7 @@ const init = () => {
                 name,
                 address,
                 text,
-                date
+                dateFull
             }
             let placemark = createPlacemark(id, lastCoords, lastAddress, content);
 
@@ -149,30 +167,21 @@ const init = () => {
 ymaps.ready(init)
 
 function createPlacemark(id, coords, lastAddress, content) {
-    // Создаём макет содержимого.
     let MyIconContentLayout = ymaps.templateLayoutFactory.createClass(
         '<i class="map-pin active fa fa-map-marker" aria-hidden="true"></i>'
     )
-    const placemark = new ymaps.Placemark(coords, {
-        balloonContentHeader: `${content.address}`,
-        balloonContentBody: 
-        `<a href="#" class="baloon-link" data-id="${id}" data-coords="${coords}" data-address="${lastAddress}">
-        ${lastAddress}
-        <a>
-        <br>
-        ${content.text}`,
-        balloonContentFooter: `${content.date}`
-    }, {
-        // Необходимо указать данный тип макета.
+
+    const placemark = new ymaps.Placemark(coords, {}, {
         iconImageHref: '',
-        // Размеры метки.
         iconImageSize: [29, 50],
-        // Смещение левого верхнего угла иконки относительно
-        // её "ножки" (точки привязки).
         iconImageOffset: [-14, -25],
         iconLayout: 'default#imageWithContent',
         iconContentLayout: MyIconContentLayout
     })
+
+    placemark.properties.set('balloonContentHeader', `${content.address}`);
+    placemark.properties.set('balloonContentBody', `<a href="#" class="baloon-link" data-id="${id}" data-coords="${coords}" data-title="${lastAddress}">    ${lastAddress}    <a>    <br>    ${content.text}`);
+    placemark.properties.set('balloonContentFooter', `${content.dateFull}`);
 
     placemark.properties.set('test-id', id);
     placemark.properties.set('type', 'geoMarker');
@@ -253,17 +262,3 @@ function generateComments(id) {
 
     return modalHtml;
 }
-
-/* document.addEventListener('click', e => {
-    let target = e.target;
-
-    if (target.classList.contains('baloon-link')) {
-        e.preventDefault()
-
-        let id = target.dataset.id;
-        let position = target.dataset.coords;
-        let title = target.dataset.address;
-
-        showModal(id, position, title)
-    }
-}) */
