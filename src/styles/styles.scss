@@ -249,3 +249,7 @@ body::before {
 .shake {
   animation-name: shake;
 }
+
+.ballon_header { font-size: 15px; margin-top: 0; margin-bottom: 10px; }
+.ballon_body { font-size: 14px;   }
+.ballon_footer { font-size: 12px; text-align: right; color: #7D7D7D; margin-top: 10px; }

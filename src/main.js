@@ -17,6 +17,27 @@ const init = () => {
         searchControlProvider: 'yandex#search'
     });
 
+    let customItemContentLayout = ymaps.templateLayoutFactory.createClass(
+        // Флаг "raw" означает, что данные вставляют "как есть" без экранирования html.
+        '<h2 class=ballon_header>{{ properties.balloonContentHeader|raw }}</h2>' +
+            '<div class=ballon_body>{{ properties.balloonContentBody|raw }}</div>' +
+            '<div class=ballon_footer>{{ properties.balloonContentFooter|raw }}</div>'
+    );    
+    const clusterer = new ymaps.Clusterer({
+        preset: 'islands#invertedOrangeClusterIcons',
+        clusterBalloonContentLayout: 'cluster#balloonCarousel',
+        clusterBalloonItemContentLayout: customItemContentLayout,        
+        clusterBalloonPanelMaxMapArea: 0,
+        clusterBalloonContentLayoutWidth: 200,
+        clusterBalloonContentLayoutHeight: 130,
+        clusterBalloonPagerSize: 5,     
+        groupByCoordinates: false,
+
+        clusterDisableClickZoom: true,
+        clusterHideIconOnBalloonOpen: false,
+        geoObjectHideIconOnBalloonOpen: false
+    });
+
     map.events.add('click', e => {
         lastCoords = e.get('coords');
         let position = e.get('position');
@@ -41,10 +62,21 @@ const init = () => {
         let lastAddress = marker.properties.get('address');
 
         if (type === 'geoMarker') {
+            e.preventDefault();
             showModal(id, position, lastAddress)
-        }
+        }        
     })
+    map.events.add('click', function (e) {
+        console.log('click map');
+        
+        var eMap = e.get('target');// Получение ссылки на объект, сгенерировавший событие (карта).
 
+        console.log(
+            eMap.get('domEvent').get('position')
+
+        );
+        
+    });
     modalSaveReview.addEventListener('click', e => {
         e.preventDefault()
         let btn = e.target;
@@ -69,9 +101,19 @@ const init = () => {
         }
     
         if (!error) {
-            
-            map.geoObjects.add(createPlacemark(id, lastCoords, lastAddress));
-            
+            let content = {
+                name,
+                address,
+                text,
+                date
+            }
+            let placemark = createPlacemark(id, lastCoords, lastAddress, content);
+
+            map.geoObjects.add(placemark);
+
+            clusterer.add(placemark);
+            map.geoObjects.add(clusterer);
+
             let comment = comments.find(item => {
                 return item.id === id;
             })
@@ -106,12 +148,21 @@ const init = () => {
 
 ymaps.ready(init)
 
-function createPlacemark(id, coords, lastAddress) {
+function createPlacemark(id, coords, lastAddress, content) {
     // Создаём макет содержимого.
     let MyIconContentLayout = ymaps.templateLayoutFactory.createClass(
         '<i class="map-pin active fa fa-map-marker" aria-hidden="true"></i>'
     )
-    const placemark = new ymaps.Placemark(coords, {}, {
+    const placemark = new ymaps.Placemark(coords, {
+        balloonContentHeader: `${content.address}`,
+        balloonContentBody: 
+        `<a href="#" class="baloon-link" data-id="${id}" data-coords="${coords}" data-address="${lastAddress}">
+        ${lastAddress}
+        <a>
+        <br>
+        ${content.text}`,
+        balloonContentFooter: `${content.date}`
+    }, {
         // Необходимо указать данный тип макета.
         iconImageHref: '',
         // Размеры метки.
@@ -130,7 +181,7 @@ function createPlacemark(id, coords, lastAddress) {
     return placemark;
 }
 
-function showModal(id, position, titleName) {
+function showModal(id, position, titleName) {    
     modal.classList.add('active')
     let form = modal.querySelector('#add-review');
 
@@ -202,3 +253,17 @@ function generateComments(id) {
 
     return modalHtml;
 }
+
+/* document.addEventListener('click', e => {
+    let target = e.target;
+
+    if (target.classList.contains('baloon-link')) {
+        e.preventDefault()
+
+        let id = target.dataset.id;
+        let position = target.dataset.coords;
+        let title = target.dataset.address;
+
+        showModal(id, position, title)
+    }
+}) */
