@@ -29,16 +29,14 @@ export function modalDnD() {
 
     })
 
-    modalHeader.addEventListener('drag', evt => {
-        modalMove(evt);
-    })
+    modalHeader.addEventListener('drag', modalMove)
 
-    modalHeader.addEventListener('dragend', evt => {
-        evt.preventDefault();
-        modalMove(evt);
-    })
+    modalHeader.addEventListener('dragend', modalMove)
 
-    function modalMove(evt) {
+    function modalMove(evt) {        
+        if (evt.type === 'dragend') {            
+            evt.preventDefault()
+        }
         modal.style.left = `${evt.clientX - shift.left}px`
         modal.style.top = `${evt.clientY - shift.top}px`
 

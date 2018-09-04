@@ -75,14 +75,7 @@ const init = () => {
             let obj = res.geoObjects.get(0);
 
             lastAddress = obj.properties.get('name');   
-            
-/*             let placemark = createPlacemark(id, lastCoords, lastAddress);
-
-            map.geoObjects.add(placemark);
-            clusterer.add(placemark) */
-
             showModal(id, position, lastAddress)
-            
         })
     })
 
@@ -172,7 +165,7 @@ const init = () => {
 
 ymaps.ready(init)
 
-function createPlacemark(id, coords, lastAddress, content = '') {
+function createPlacemark(id, coords, lastAddress, content = {}) {
     let MyIconContentLayout = ymaps.templateLayoutFactory.createClass(
         '<i class="map-pin active fa fa-map-marker" aria-hidden="true"></i>'
     )
