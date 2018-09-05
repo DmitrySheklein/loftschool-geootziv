@@ -76,6 +76,12 @@ const init = () => {
 
             lastAddress = obj.properties.get('name');   
             showModal(id, position, lastAddress)
+            clearEmptyPinInClusterer()
+
+            let placemark = createPlacemark(id, lastCoords, lastAddress);
+
+            clusterer.add(placemark);
+            map.geoObjects.add(clusterer);  
         })
     })
 
@@ -89,6 +95,7 @@ const init = () => {
 
         if (type === 'geoMarker') {
             e.preventDefault();
+            marker.options.set('iconContentLayout', iconLayoutActive);
             showModal(id, position, lastAddress)
         }        
     })
@@ -118,39 +125,43 @@ const init = () => {
         }
     
         if (!error) {
-            let content = {
-                name,
-                address,
-                text,
-                dateFull
-            }
-            let placemark = createPlacemark(id, lastCoords, lastAddress, content);
-
-            map.geoObjects.add(placemark);
-
-            clusterer.add(placemark);
-            map.geoObjects.add(clusterer);
-
             let comment = comments.find(item => {
                 return item.id === id;
             })
             
+            let pinsArr = clusterer.getGeoObjects();
+
+            for (let i = 0; i < pinsArr.length; i++) {
+                const pin = pinsArr[i];
+
+                if (pin.properties.get('test-id') === Number(id)) {
+                    pin.properties.set('withReviews', true)
+
+                    pin.properties.set('balloonContentHeader', `${address}`);
+                    pin.properties.set('balloonContentBody', `<a href="#" class="baloon-link" data-id="${id}" data-coords="${lastCoords}" data-title="${lastAddress}">    ${lastAddress}    <a>    <br>    ${text}`);
+                    pin.properties.set('balloonContentFooter', `${dateFull}`);
+
+                }
+
+            }
+
             if (!comment) {
+                
                 comments.push({
                     id,
                     lastAddress,
                     list: [{
                         name,
                         address,
-                        date,
+                        dateFull,
                         text  
                     }]
                 })
-            } else {
+            } else {                
                 comment.list.push({
                     name,
                     address,
-                    date,
+                    dateFull,
                     text  
                 })
             }         
@@ -158,107 +169,142 @@ const init = () => {
             let commentList = modal.querySelector('.modal__comments-list');
     
             commentList.innerHTML = generateComments(id);
+            
             form.reset()
         }
     })
+    function clearEmptyPinInClusterer() {
+        let pinsArr = clusterer.getGeoObjects();
+
+        for (let i = 0; i < pinsArr.length; i++) {
+            const pin = pinsArr[i];
+
+            if (!pin.properties.get('withReviews')) {
+                clusterer.remove(pin);
+            } else {
+                pin.options.set('iconContentLayout', iconLayoutDefault);
+            }        
+
+        }
+    }
+    const iconLayoutActive = ymaps.templateLayoutFactory.createClass(
+        '<i class="map-pin active fa fa-map-marker" aria-hidden="true"></i>'
+    ) 
+    const iconLayoutDefault = ymaps.templateLayoutFactory.createClass(
+        '<i class="map-pin fa fa-map-marker" aria-hidden="true"></i>'
+    ) 
+
+    function createPlacemark(id, coords, lastAddress, withReviews = false) {
+        const placemark = new ymaps.Placemark(coords, {}, {
+            iconImageHref: '',
+            iconImageSize: [29, 50],
+            iconImageOffset: [-14, -25],
+            iconLayout: 'default#imageWithContent',
+            iconContentLayout: iconLayoutActive
+        })
+
+        placemark.properties.set('test-id', id);
+        placemark.properties.set('type', 'geoMarker');
+        placemark.properties.set('address', lastAddress);
+        placemark.properties.set('withReviews', withReviews);
+
+        return placemark;
+    }
+    function showModal(id, position, titleName) {
+        modal.classList.add('active')
+        let form = modal.querySelector('#add-review');
+
+        form.dataset.id = id;
+        let title = modal.querySelector('.modal__title');
+
+        title.innerHTML = titleName;
+
+        let commentList = modal.querySelector('.modal__comments-list');
+
+        commentList.innerHTML = generateComments(String(id));
+
+        let positionLeft = position[0];
+        let positionTop = position[1];
+
+        let windowWidth = window.innerWidth;
+        let windowHeight = window.innerHeight;
+
+        let modalWidth = modal.offsetWidth;
+        let modalHeight = modal.offsetHeight;
+
+        let pinSize = {
+            width: 29,
+            height: 50
+        }
+
+        modal.style.left = `${positionLeft + pinSize.width / 2}px`
+        modal.style.top = `${positionTop + pinSize.height / 2}px`
+
+        if (positionLeft + modalWidth > windowWidth) {
+            modal.style.left = `${positionLeft - modalWidth}px`;
+        }
+
+        if (positionTop + modalHeight > windowHeight) {
+            modal.style.top = `${windowHeight - modalHeight}px`
+        }
+    }
+    function hideModal() {
+        let title = modal.querySelector('.modal__title');
+        let commentList = modal.querySelector('.modal__comments-list');
+
+        commentList.innerHTML = '';
+        title.innerHTML = '';
+        modal.classList.remove('active');
+
+        let inputs = modal.querySelectorAll('.modal-review__input');
+
+        for (let input of inputs) {
+            input.classList.remove('required')
+            input.value = '';
+        }
+        clearEmptyPinInClusterer();
+    }
+    modalCloseBtn.addEventListener('click', hideModal)
+
+    function generateComments(id) {
+        let comment = comments.find(item => {
+            return item.id === id;
+        })
+
+        if (!comment) {
+            return 'Отзывов ещё нет'
+        }
+
+        let modalHtml = renderReview({
+            list: comment.list
+        })
+
+        return modalHtml;
+    }
+    function modalFormValidate() {
+        const form = document.getElementById('add-review')
+        const inputs = form.querySelectorAll('.modal-review__input');
+
+        for (let input of inputs) {
+            if (input.required) {
+                input.addEventListener('keyup', onInputChange)
+            }
+        }
+
+        function onInputChange(evt) {
+            let input = evt.target;
+            let value = input.value;
+
+            if (!value) {
+                input.classList.add('required')
+            } else {
+                input.classList.remove('required')
+            }            
+        }
+    }
+    modalFormValidate()
+    modalDnD()
 }
 
 ymaps.ready(init)
 
-function createPlacemark(id, coords, lastAddress, content = {}) {
-    let MyIconContentLayout = ymaps.templateLayoutFactory.createClass(
-        '<i class="map-pin active fa fa-map-marker" aria-hidden="true"></i>'
-    )
-
-    const placemark = new ymaps.Placemark(coords, {}, {
-        iconImageHref: '',
-        iconImageSize: [29, 50],
-        iconImageOffset: [-14, -25],
-        iconLayout: 'default#imageWithContent',
-        iconContentLayout: MyIconContentLayout
-    })
-
-    placemark.properties.set('balloonContentHeader', `${content.address}`);
-    placemark.properties.set('balloonContentBody', `<a href="#" class="baloon-link" data-id="${id}" data-coords="${coords}" data-title="${lastAddress}">    ${lastAddress}    <a>    <br>    ${content.text}`);
-    placemark.properties.set('balloonContentFooter', `${content.dateFull}`);
-
-    placemark.properties.set('test-id', id);
-    placemark.properties.set('type', 'geoMarker');
-    placemark.properties.set('address', lastAddress);
-
-    return placemark;
-}
-
-function showModal(id, position, titleName) {    
-    modal.classList.add('active')
-    let form = modal.querySelector('#add-review');
-
-    form.dataset.id = id;
-    let title = modal.querySelector('.modal__title');
-
-    title.innerHTML = titleName;
-
-    let commentList = modal.querySelector('.modal__comments-list');
-
-    commentList.innerHTML = generateComments(id);
-
-    let positionLeft = position[0];
-    let positionTop = position[1];
-
-    let windowWidth = window.innerWidth;
-    let windowHeight = window.innerHeight;
-
-    let modalWidth = modal.offsetWidth;
-    let modalHeight = modal.offsetHeight;
-
-    let pinSize = {
-        width: 29,
-        height: 50
-    }
-
-    modal.style.left = `${positionLeft + pinSize.width / 2}px`
-    modal.style.top = `${positionTop + pinSize.height / 2}px`
-
-    if (positionLeft + modalWidth > windowWidth) {
-        modal.style.left = `${positionLeft - modalWidth}px`;
-    }
-
-    if (positionTop + modalHeight > windowHeight) {
-        modal.style.top = `${windowHeight - modalHeight}px`
-    }
-}
-
-function hideModal() {
-    let title = modal.querySelector('.modal__title');
-    let commentList = modal.querySelector('.modal__comments-list');
-
-    commentList.innerHTML = '';
-    title.innerHTML = '';
-    modal.classList.remove('active');
-
-    let inputs = modal.querySelectorAll('.modal-review__input');
-
-    for (let input of inputs) {
-        input.classList.remove('required')
-        input.value = '';
-    }
-}
-
-modalCloseBtn.addEventListener('click', hideModal)
-
-function generateComments(id) {
-    let comment = comments.find(item => {
-        return item.id === id;
-    })
-    
-    if (!comment) {
-        return 'Отзывов ещё нет'
-    }
-
-    let modalHtml = renderReview({
-        list: comment.list
-    })
-
-    return modalHtml;
-}
-modalDnD()

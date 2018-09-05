@@ -214,7 +214,7 @@ body::before {
     transition: border .3s ease;
 
     &:focus {
-      border-color: $orange;
+      border-color: darken($color: #c4c4c4, $amount: 15);
     }
     &.required {
       animation: shake 1s ease;
