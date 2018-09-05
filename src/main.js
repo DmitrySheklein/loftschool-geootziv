@@ -75,11 +75,11 @@ const init = () => {
             let obj = res.geoObjects.get(0);
 
             lastAddress = obj.properties.get('name');   
-            showModal(id, position, lastAddress)
+            showModal(id, position, lastAddress, lastCoords)
             clearEmptyPinInClusterer()
 
             let placemark = createPlacemark(id, lastCoords, lastAddress);
-
+            
             clusterer.add(placemark);
             map.geoObjects.add(clusterer);  
         })
@@ -105,6 +105,7 @@ const init = () => {
         let btn = e.target;
         let form = btn.parentNode;
         let id = form.dataset.id;
+        let coords = form.dataset.coords;
         let name = form.name.value;
         let address = form.address.value;
         let text = form.text.value;
@@ -150,6 +151,7 @@ const init = () => {
                 comments.push({
                     id,
                     lastAddress,
+                    coords,
                     list: [{
                         name,
                         address,
@@ -165,7 +167,8 @@ const init = () => {
                     text  
                 })
             }         
-            
+            localStorage.comments = JSON.stringify(comments);
+
             let commentList = modal.querySelector('.modal__comments-list');
     
             commentList.innerHTML = generateComments(id);
@@ -175,7 +178,7 @@ const init = () => {
     })
     function clearEmptyPinInClusterer() {
         let pinsArr = clusterer.getGeoObjects();
-
+        
         for (let i = 0; i < pinsArr.length; i++) {
             const pin = pinsArr[i];
 
@@ -187,6 +190,20 @@ const init = () => {
 
         }
     }
+
+    if (localStorage.comments) {
+        let comments = JSON.parse(localStorage.comments)
+
+        for (let comment of comments) {
+            let placemark = createPlacemark(comment.id, comment.coords, comment.lastAddress, true);
+            
+            clusterer.add(placemark);
+            console.log('render-pin');
+                        
+        }
+        map.geoObjects.add(clusterer);
+    }
+
     const iconLayoutActive = ymaps.templateLayoutFactory.createClass(
         '<i class="map-pin active fa fa-map-marker" aria-hidden="true"></i>'
     ) 
@@ -194,7 +211,7 @@ const init = () => {
         '<i class="map-pin fa fa-map-marker" aria-hidden="true"></i>'
     ) 
 
-    function createPlacemark(id, coords, lastAddress, withReviews = false) {
+    function createPlacemark(id, coords, lastAddress, withReviews = false, content = null) {
         const placemark = new ymaps.Placemark(coords, {}, {
             iconImageHref: '',
             iconImageSize: [29, 50],
@@ -208,13 +225,20 @@ const init = () => {
         placemark.properties.set('address', lastAddress);
         placemark.properties.set('withReviews', withReviews);
 
+        if (content) {
+            placemark.properties.set('balloonContentHeader', `${content.address}`);
+            placemark.properties.set('balloonContentBody', `<a href="#" class="baloon-link" data-id="${id}" data-coords="${lastCoords}" data-title="${lastAddress}">    ${lastAddress}    <a>    <br>    ${content.text}`);
+            placemark.properties.set('balloonContentFooter', `${content.dateFull}`);
+        }
+
         return placemark;
     }
-    function showModal(id, position, titleName) {
+    function showModal(id, position, titleName, coords = '') {
         modal.classList.add('active')
         let form = modal.querySelector('#add-review');
 
         form.dataset.id = id;
+        form.dataset.coords = coords;
         let title = modal.querySelector('.modal__title');
 
         title.innerHTML = titleName;
