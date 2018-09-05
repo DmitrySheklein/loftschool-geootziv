@@ -2,7 +2,7 @@ import './styles/styles.scss';
 import renderReview from './../modal-review.hbs';
 import { modalDnD } from './modalDnD.js';
 
-let comments = [];
+let comments =  JSON.parse(localStorage.comments) || [];
 let modal = document.getElementById('modal');
 let modalCloseBtn = document.querySelector('.modal__close')
 let modalSaveReview = modal.querySelector('.btn.btn--save')
@@ -71,6 +71,7 @@ const init = () => {
         let coordToAdress = ymaps.geocode(lastCoords);
         let id = Date.now();
 
+
         coordToAdress.then(res => {
             let obj = res.geoObjects.get(0);
 
@@ -110,7 +111,6 @@ const init = () => {
         let address = form.address.value;
         let text = form.text.value;
         let dateNow = new Date();
-        let date = `${dateNow.getDate()}.${dateNow.getUTCMonth() + 1}.${dateNow.getFullYear()}`;
         let dateFull = `${dateNow.getDate()}.${dateNow.getUTCMonth() + 1}.${dateNow.getFullYear()} ${dateNow.getHours()}:${dateNow.getMinutes()}:${dateNow.getSeconds()}`
         let error = false;
     
@@ -195,11 +195,14 @@ const init = () => {
         let comments = JSON.parse(localStorage.comments)
 
         for (let comment of comments) {
-            let placemark = createPlacemark(comment.id, comment.coords, comment.lastAddress, true);
+            let [x,y] = comment.coords.split(',')
+            let coords = [Number(x),Number(y)]
+            console.log(coords);
             
+            let placemark = createPlacemark(comment.id, coords, comment.lastAddress, true, true);
+
             clusterer.add(placemark);
-            console.log('render-pin');
-                        
+            
         }
         map.geoObjects.add(clusterer);
     }
