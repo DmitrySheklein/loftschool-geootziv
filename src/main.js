@@ -130,11 +130,7 @@ const init = () => {
             }
         }
     
-        if (!error) {
-            let comment = comments.find(item => {
-                return item.id === id;
-            })
-            
+        if (!error) {          
             let pinsArr = clusterer.getGeoObjects();
 
             for (let i = 0; i < pinsArr.length; i++) {
@@ -143,19 +139,24 @@ const init = () => {
                 if (pin.properties.get('test-id') === Number(id)) {
                     pin.properties.set('withReviews', true)
 
-                    pin.properties.set('balloonContentHeader', `${address}`);
-                    pin.properties.set('balloonContentBody', `<a href="#" class="baloon-link" data-id="${id}" data-coords="${lastCoords}" data-title="${lastAddress}">    ${lastAddress}    <a>    <br>    ${text}`);
+                    pin.properties.set('balloonContentHeader', `${lastAddress}`);
+                    pin.properties.set('balloonContentBody', `<a href="#" class="baloon-link" data-id="${id}" data-coords="${lastCoords}" data-title="${lastAddress}">    ${lastAddress}    <a>`);
                     pin.properties.set('balloonContentFooter', `${dateFull}`);
 
                 }
 
             }
 
+            let comment = comments.find(item => {
+                return item.id === id;
+            })
+
             if (!comment) {
                 
                 comments.push({
                     id,
                     lastAddress,
+                    dateFull,
                     coords,
                     list: [{
                         name,
@@ -171,7 +172,8 @@ const init = () => {
                     dateFull,
                     text  
                 })
-            }         
+            }     
+                
             localStorage.comments = JSON.stringify(comments);
 
             let commentList = modal.querySelector('.modal__comments-list');
@@ -202,7 +204,7 @@ const init = () => {
         for (let comment of comments) {
             let [x, y] = comment.coords.split(',');
             let coords = [Number(x), Number(y)];        
-            let placemark = createPlacemark(comment.id, coords, comment.lastAddress, true, true, 'default');
+            let placemark = createPlacemark(comment.id, coords, comment.lastAddress, true, { dateFull: comment.dateFull }, 'default');
 
             clusterer.add(placemark);
             
@@ -225,8 +227,8 @@ const init = () => {
         placemark.properties.set('withReviews', withReviews);
 
         if (content) {
-            placemark.properties.set('balloonContentHeader', `${content.address}`);
-            placemark.properties.set('balloonContentBody', `<a href="#" class="baloon-link" data-id="${id}" data-coords="${lastCoords}" data-title="${lastAddress}">    ${lastAddress}    <a>    <br>    ${content.text}`);
+            placemark.properties.set('balloonContentHeader', `${lastAddress}`);
+            placemark.properties.set('balloonContentBody', `<a href="#" class="baloon-link" data-id="${id}" data-coords="${lastCoords}" data-title="${lastAddress}">    ${lastAddress}    <a>`);
             placemark.properties.set('balloonContentFooter', `${content.dateFull}`);
         }
 
