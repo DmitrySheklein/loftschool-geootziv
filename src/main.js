@@ -2,7 +2,7 @@ import './styles/styles.scss';
 import renderReview from './../modal-review.hbs';
 import { modalDnD } from './modalDnD.js';
 
-let comments =  JSON.parse(localStorage.comments) || [];
+let comments = localStorage.getItem('comments') ? JSON.parse(localStorage.getItem('comments') ) : [];
 let modal = document.getElementById('modal');
 let modalCloseBtn = document.querySelector('.modal__close')
 let modalSaveReview = modal.querySelector('.btn.btn--save')
@@ -64,13 +64,18 @@ const init = () => {
         clusterHideIconOnBalloonOpen: false,
         geoObjectHideIconOnBalloonOpen: false
     });
+    const iconLayoutActive = ymaps.templateLayoutFactory.createClass(
+        '<i class="map-pin active fa fa-map-marker" aria-hidden="true"></i>'
+    )     
+    const iconLayoutDefault = ymaps.templateLayoutFactory.createClass(
+        '<i class="map-pin fa fa-map-marker" aria-hidden="true"></i>'
+    ) 
 
     map.events.add('click', e => {
         lastCoords = e.get('coords');
         position = e.get('position');
         let coordToAdress = ymaps.geocode(lastCoords);
         let id = Date.now();
-
 
         coordToAdress.then(res => {
             let obj = res.geoObjects.get(0);
@@ -191,15 +196,13 @@ const init = () => {
         }
     }
 
-    if (localStorage.comments) {
-        let comments = JSON.parse(localStorage.comments)
+    if (localStorage.getItem('comments') ) {
+        let comments = JSON.parse(localStorage.getItem('comments') )
 
         for (let comment of comments) {
-            let [x,y] = comment.coords.split(',')
-            let coords = [Number(x),Number(y)]
-            console.log(coords);
-            
-            let placemark = createPlacemark(comment.id, coords, comment.lastAddress, true, true);
+            let [x, y] = comment.coords.split(',');
+            let coords = [Number(x), Number(y)];        
+            let placemark = createPlacemark(comment.id, coords, comment.lastAddress, true, true, 'default');
 
             clusterer.add(placemark);
             
@@ -207,22 +210,15 @@ const init = () => {
         map.geoObjects.add(clusterer);
     }
 
-    const iconLayoutActive = ymaps.templateLayoutFactory.createClass(
-        '<i class="map-pin active fa fa-map-marker" aria-hidden="true"></i>'
-    ) 
-    const iconLayoutDefault = ymaps.templateLayoutFactory.createClass(
-        '<i class="map-pin fa fa-map-marker" aria-hidden="true"></i>'
-    ) 
-
-    function createPlacemark(id, coords, lastAddress, withReviews = false, content = null) {
+    function createPlacemark(id, coords, lastAddress, withReviews = false, content = null, layout = 'active') {
         const placemark = new ymaps.Placemark(coords, {}, {
             iconImageHref: '',
             iconImageSize: [29, 50],
             iconImageOffset: [-14, -25],
             iconLayout: 'default#imageWithContent',
-            iconContentLayout: iconLayoutActive
+            iconContentLayout: (layout === 'active') ? iconLayoutActive : iconLayoutDefault
         })
-
+               
         placemark.properties.set('test-id', id);
         placemark.properties.set('type', 'geoMarker');
         placemark.properties.set('address', lastAddress);
